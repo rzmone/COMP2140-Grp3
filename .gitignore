@@ -1,0 +1,48 @@
+########################
+# Maven build output
+########################
+target/
+
+########################
+# Old-style / IDE build dirs
+########################
+bin/
+out/
+
+########################
+# Java compiled classes & logs
+########################
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+
+########################
+# IDE / project metadata
+########################
+# IntelliJ
+.idea/
+*.iml
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# VS Code (optional: keep if you want to share settings)
+# .vscode/
+
+########################
+# Misc / OS files
+########################
+.DS_Store
+Thumbs.db
+
+########################
+# Old / niche Java tools
+########################
+# BlueJ
+*.ctxt
+
+# J2ME
+.mtj.tmp/
