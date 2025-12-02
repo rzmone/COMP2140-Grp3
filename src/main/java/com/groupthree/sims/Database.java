@@ -1,0 +1,143 @@
+package com.groupthree.sims;
+
+import java.util.*;
+
+public class Database {
+
+    /**
+     * Executes a read operation and retrieves data from the database.
+     *
+     * <p>The method returns a list of rows, where each row is represented as a
+     * {@code Map<String, Object>}. Keys correspond to column names, and values
+     * store the associated column data.</p>
+     *
+     * <p><b>Example Usage:</b></p>
+     * <pre>{@code
+     * List<Map<String, Object>> results = Database.select();
+     *
+     * for (Map<String, Object> row : results) {
+     *     System.out.println("ID: " + row.get("id"));
+     *     System.out.println("Name: " + row.get("name"));
+     *     System.out.println("Age: " + row.get("age"));
+     * }
+     * }</pre>
+     *
+     * @return a list of result rows, each represented as a map of column names
+     *         to values; never {@code null}
+     */
+    public static List<Map<String, Object>> select(String query) {
+        System.out.println("Querying the database...");
+        System.out.println("Query executed successfully.");
+        return Collections.emptyList(); // pretend no results
+    }
+
+    public static List<Map<String, Object>> selectAll(String tableName) {
+        System.out.println("Selecting all from " + tableName + "...");
+        System.out.println("Selection executed successfully.");
+        return Collections.emptyList(); // pretend no results
+    }
+
+    /**
+     * Inserts a new record into the specified table.
+     *
+     * <p>The {@code values} map represents column names and their corresponding
+     * values for the new record. The method returns the number of rows affected
+     * by the operation. A return value of {@code 1} typically indicates that a 
+     * single record was added successfully.</p>
+     *
+     * <p><b>Example Usage:</b></p>
+     * <pre>{@code
+     * Map<String, Object> values = new HashMap<>();
+     * values.put("name", "John Doe");
+     * values.put("age", 20);
+     * values.put("major", "Computer Science");
+     *
+     * int rowsInserted = Database.insert("students", values);
+     *
+     * if (rowsInserted > 0) {
+     *     System.out.println("Student inserted successfully.");
+     * }
+     * }</pre>
+     *
+     * @param tableName the name of the table into which the record will be inserted
+     * @param values a map of column names to values representing the new record
+     * @return the number of records inserted
+     */
+    public static int insert(String tableName, Map<String, Object> values) {
+        System.out.println("Inserting into the database...");
+        System.out.println("Inserted successfully.");
+        return 1; // pretend one row inserted
+    }
+
+    /**
+     * Updates existing records in the specified table.
+     *
+     * <p>The {@code values} map represents the columns to be updated and their
+     * new values. The {@code whereClause} defines which records should be
+     * modified (for example, {@code "id = 5"}).</p>
+     *
+     * <p>The method returns the number of rows modified during the update
+     * operation. A return value of {@code 1} generally indicates that one
+     * record was updated.</p>
+     *
+     * <p><b>Example Usage:</b></p>
+     * <pre>{@code
+     * Map<String, Object> updates = new HashMap<>();
+     * updates.put("major", "Information Technology");
+     *
+     * String where = "id = 5";
+     *
+     * int rowsUpdated = Database.update("students", updates, where);
+     *
+     * if (rowsUpdated > 0) {
+     *     System.out.println("Student record updated.");
+     * }
+     * }</pre>
+     *
+     * @param tableName the name of the table containing the records to update
+     * @param values a map of column names to their new values
+     * @param whereClause the condition used to select which records to update
+     * @return the number of records updated
+     */
+    public static int update(String tableName, Map<String, Object> values, String whereClause) {
+        System.out.println("Updating the database...");
+        System.out.println("Updated successfully.");
+        return 1; // pretend one row updated
+    }
+
+    /**
+     * Deletes records from the specified table using the provided condition.
+     *
+     * <p>The {@code whereClause} defines which records should be removed
+     * (for example, {@code "id = 5"}). If the {@code whereClause} is omitted
+     * or too broad, multiple records may be deleted depending on the
+     * underlying implementation and database state.</p>
+     *
+     * <p>The method returns the number of rows removed from the database. A
+     * return value of {@code 1} generally indicates that one record was
+     * deleted.</p>
+     *
+     * <p><b>Example Usage:</b></p>
+     * <pre>{@code
+     * String table = "students";
+     * String where = "id = 10";
+     *
+     * int rowsDeleted = Database.delete(table, where);
+     *
+     * if (rowsDeleted > 0) {
+     *     System.out.println("Record deleted successfully.");
+     * } else {
+     *     System.out.println("No records matched the delete criteria.");
+     * }
+     * }</pre>
+     *
+     * @param tableName   the name of the table from which records will be deleted
+     * @param whereClause the condition used to select which records to delete
+     * @return the number of records deleted
+     */
+    public static int delete(String tableName, String whereClause) {
+        System.out.println("Deleting from the database...");
+        System.out.println("Deleted successfully.");
+        return 1; // pretend one row deleted
+    }
+}
