@@ -1,0 +1,26 @@
+#BlueJ class context
+comment0.target=FactoryUI
+comment0.text=\r\n\ FactoryUI\r\n\ \ -\ Graphical\ Factory\ UI\ for\ Sweetcraft.\r\n\ \ -\ Lets\ production\ staff\ enter\ batch\ data\ and\ see\ confirmations.\r\n\r\n\ Matches\ UML\:\r\n\ \ \ +displayScreen()\r\n\ \ \ +enterData()\r\n\ \ \ +showResults()\r\n\r\n\ NOTE\:\r\n\ \ \ All\ calls\ to\ ProductionSys\ and\ InventorySys\ are\ COMMENTED\ OUT.\r\n\ \ \ UNCOMMENT\ LINES\ LATER\r\n
+comment1.params=
+comment1.target=FactoryUI()
+comment1.text=\r\n\ Default\ constructor\ \u2013\ builds\ the\ GUI.\r\n\ (No\ backend\ objects\ wired\ in\ yet.)\r\n
+comment2.params=
+comment2.target=void\ buildUI()
+comment3.params=e
+comment3.target=void\ actionPerformed(java.awt.event.ActionEvent)
+comment4.params=
+comment4.target=void\ displayScreen()
+comment4.text=\r\n\ UML\:\ +displayScreen()\r\n\ Shows\ the\ Factory\ UI\ window.\r\n
+comment5.params=
+comment5.target=void\ enterData()
+comment5.text=\r\n\ UML\:\ +enterData()\r\n\ Reads\ the\ form,\ validates\ it,\ and\ (in\ the\ real\ system)\ would\r\n\ send\ data\ to\ ProductionSys\ and\ InventorySys.\r\n\ For\ now,\ it\ uses\ hard-coded\ demo\ behaviour.\r\n
+comment6.params=
+comment6.target=void\ showResults()
+comment6.text=\r\n\ UML\:\ +showResults()\r\n\ Generic\ summary\ \u2013\ currently\ just\ a\ placeholder.\r\n\ (Usually\ you'd\ pull\ summary\ stats\ from\ the\ system\ layer.)\r\n
+comment7.params=message
+comment7.target=void\ showResults(java.lang.String)
+comment7.text=\r\n\ Overloaded\ helper\:\ appends\ a\ message\ to\ the\ output\ area.\r\n
+comment8.params=args
+comment8.target=void\ main(java.lang.String[])
+comment8.text=\r\n\ Simple\ main\ so\ you\ can\ run\ FactoryUI\ directly.\r\n
+numComments=9

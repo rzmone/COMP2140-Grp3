@@ -1,0 +1,26 @@
+#BlueJ class context
+comment0.target=POSGUI
+comment0.text=\r\n\ POSGUI\r\n\ \ -\ Graphical\ Point-of-Sale\ UI\ for\ Sweetcraft.\r\n\ \ -\ Lets\ staff\ enter\ a\ sale\ and\ see\ a\ simple\ receipt.\r\n\r\n\ Matches\ UML\ (POSUI)\:\r\n\ \ \ +displayScreen()\r\n\ \ \ +enterSale()\r\n\ \ \ +showReceipt()\r\n\r\n\ NOTE\:\r\n\ \ \ All\ calls\ to\ SaleSys\ and\ InventorySys\ are\ COMMENTED\ OUT.\r\n\ \ \ Your\ group\ members\ can\ plug\ them\ in\ later.\r\n
+comment1.params=
+comment1.target=POSGUI()
+comment1.text=\r\n\ Default\ constructor\:\ builds\ the\ POS\ screen.\r\n
+comment2.params=e
+comment2.target=void\ actionPerformed(java.awt.event.ActionEvent)
+comment3.params=
+comment3.target=void\ displayScreen()
+comment3.text=\r\n\ UML\:\ +displayScreen()\r\n\ Shows\ the\ POS\ window.\r\n
+comment4.params=
+comment4.target=void\ enterSale()
+comment4.text=\r\n\ UML\:\ +enterSale()\r\n\ Handles\ the\ main\ sale\ entry\:\ validation\ +\ (later)\ backend\ calls.\r\n
+comment5.params=
+comment5.target=void\ showReceipt()
+comment5.text=\r\n\ UML\:\ +showReceipt()\r\n\ Simple\ generic\ receipt\ message\ (not\ used\ much\ in\ demo).\r\n
+comment6.params=text
+comment6.target=void\ showReceipt(java.lang.String)
+comment6.text=\r\n\ Overloaded\ helper\ that\ appends\ text\ to\ the\ receipt/output\ area.\r\n
+comment7.params=text
+comment7.target=void\ appendLine(java.lang.String)
+comment8.params=args
+comment8.target=void\ main(java.lang.String[])
+comment8.text=\r\n\ Main\ method\ so\ you\ can\ run\ this\ class\ directly.\r\n
+numComments=9

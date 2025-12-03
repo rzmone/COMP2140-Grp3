@@ -1,0 +1,20 @@
+#BlueJ class context
+comment0.target=AdminGUI
+comment0.text=\r\n\ AdminGUI\r\n\ \ -\ Admin\ console\ for\ Sweetcraft.\r\n\ \ -\ Admins\ can\ view\ security\ alerts\ and\ system\ history\ logs.\r\n\r\n\ Uses\ hard-coded\ demo\ data.\r\n\ Hooks\ to\ SecuritySys\ /\ HistorySys\ /\ AlertSys\ are\ commented\ out.\r\n
+comment1.params=empId\ managerName
+comment1.target=AdminGUI(java.lang.String,\ java.lang.String)
+comment1.text=\r\n\ \=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\ BACKEND\ HOOKS\ (for\ later)\ \=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\=\r\n\r\n\ //\ Fields\:\r\n\ private\ SecuritySys\ securitySys;\r\n\ private\ HistorySys\ historySys;\r\n\ private\ AlertSys\ alertSys;\r\n\r\n\ //\ Constructor\ for\ full\ integration\:\r\n\ public\ AdminGUI(String\ empId,\ String\ name,\r\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SecuritySys\ sec,\ HistorySys\ hist,\ AlertSys\ alert)\ {\r\n\ \ \ \ \ this(empId,\ name);\r\n\ \ \ \ \ this.securitySys\ \=\ sec;\r\n\ \ \ \ \ this.historySys\ \ \=\ hist;\r\n\ \ \ \ \ this.alertSys\ \ \ \ \=\ alert;\r\n\ }\r\n
+comment2.params=
+comment2.target=void\ showAlerts()
+comment2.text=\r\n\ Shows\ demo\ security\ alerts.\r\n\ Later\ this\ will\ call\ SecuritySys\ /\ AlertSys.\r\n
+comment3.params=
+comment3.target=void\ showHistory()
+comment3.text=\r\n\ Shows\ demo\ history\ logs.\r\n\ Later\ this\ will\ call\ HistorySys.\r\n
+comment4.params=
+comment4.target=void\ manageUsers()
+comment4.text=\r\n\ Demo\ user\ management\ view.\r\n\ Later\ this\ could\ call\ SecuritySys\ /\ User\ repository.\r\n
+comment5.params=text
+comment5.target=void\ appendLine(java.lang.String)
+comment6.params=args
+comment6.target=void\ main(java.lang.String[])
+numComments=7
