@@ -85,6 +85,43 @@ public class Database {
         return results;
     }
 
+    public static List<Map<String, Object>> select(String query, List<Object> params)
+    {
+        System.out.println("Querying the database (with params)...");
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+
+            // bind parameters
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                ResultSetMetaData meta = rs.getMetaData();
+                int columnCount = meta.getColumnCount();
+
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    for (int i = 1; i <= columnCount; i++) {
+                        String col = meta.getColumnLabel(i);
+                        Object val = rs.getObject(i);
+                        row.put(col, val);
+                    }
+                    results.add(row);
+                }
+            }
+
+            System.out.println("Query with params executed successfully.");
+        } catch (SQLException e) {
+            System.err.println("Error executing parametrized select:");
+            e.printStackTrace();
+        }
+
+        return results;
+    }
+
     /**
      * Retrieves all records from the specified table.
      *

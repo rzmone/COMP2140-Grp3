@@ -199,7 +199,7 @@ public class InventorySys
      * @param id the identifier of the item to retrieve
      * @return the matching item, or {@code null} if no item is found
      */
-    public static Item getItemById(String id) {
+    public static Item getItemById(int id) {
         List<Map<String, Object>> results =
             Database.select("SELECT * FROM Items WHERE id = '" + id + "'");
 

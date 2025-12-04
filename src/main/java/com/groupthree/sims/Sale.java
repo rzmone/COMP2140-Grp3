@@ -52,6 +52,16 @@ class Sale
         return saleTime;
     }
 
+    public void setCustomerName(String customerName)
+    {
+        this.customerName = customerName;
+    }
+
+    public void setSaleTime(LocalDateTime saleTime)
+    {
+        this.saleTime = saleTime;
+    }
+
     /**
      * Adds an item and its quantity to the sale. If the item already exists
      * in the sale, its quantity will be replaced with the new value.
@@ -148,4 +158,47 @@ class Sale
         sb.append("Total Amount: ").append(getTotalAmount()).append("\n");
         return sb.toString();
     }
+
+    /**
+ * Returns a clean, CSV-friendly summary string representing this sale.
+ *
+ * Example output:
+ * Customer: John Doe | Date: 2025-01-10 14:23 | Item: Chips | Qty: 3 | Price: 250.0 | Total: 750.0
+ */
+public String toSummaryString()
+{
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("Customer: ").append(customerName != null ? customerName : "N/A");
+
+    sb.append(" | Date: ");
+    if (saleTime != null)
+    {
+        sb.append(saleTime.toString().replace('T', ' ')); // cleaner than ISO
+    }
+    else
+    {
+        sb.append("N/A");
+    }
+
+    if (items.isEmpty())
+    {
+        sb.append(" | Item: N/A | Qty: 0 | Price: 0 | Total: 0");
+        return sb.toString();
+    }
+
+    // Since your system restricts to 1 item per sale:
+    Item item = getSingleItem();
+    int qty = getSingleItemQuantity();
+    double price = item.getPrice();
+    double total = price * qty;
+
+    sb.append(" | Item: ").append(item.getName());
+    sb.append(" | Qty: ").append(qty);
+    sb.append(" | Price: ").append(price);
+    sb.append(" | Total: ").append(total);
+
+    return sb.toString();
+}
+
 }

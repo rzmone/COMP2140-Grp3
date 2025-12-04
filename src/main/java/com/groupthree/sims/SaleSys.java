@@ -1,5 +1,10 @@
 package com.groupthree.sims;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -151,12 +156,39 @@ public class SaleSys
      * @param startDate the beginning of the period for which the report is generated
      * @param endDate   the end of the period for which the report is generated
      */
-    public static void exportSummaryReport(Date startDate, Date endDate)
+    public static boolean exportSummaryReport(Date startDate, Date endDate)
     {
         System.out.println("Exporting summary report...");
         List<Sale> sales = getSalesHistory(startDate, endDate);
+        List<String> saleStrings = new ArrayList<>();
 
-        //TODO: Use the Exporter module to create the report
+        for (Sale sale : sales)
+        {
+            saleStrings.add(sale.toSummaryString());
+        }
+
+        // 3. Path to Desktop
+        Path outputFile = Path.of(
+                System.getProperty("user.home"),
+                "Desktop",
+                "sales_report.csv"
+        );
+
+        //Use the Exporter module to create the report
+        List<String> headers = List.of("Sale Summary");
+
+        try
+        {
+            CsvExporter.writeCsv(outputFile, saleStrings, headers);
+            System.out.println("Report exported to: " + outputFile.toAbsolutePath());
+            return true;
+        }
+        catch (IOException e)
+        {
+            System.err.println("Failed to export CSV");
+            e.printStackTrace();
+            return false;
+        }
     }
 
     /**
@@ -171,10 +203,47 @@ public class SaleSys
      * @param endDate   the end of the date range for the query
      * @return a list of sales within the given period; currently an empty list
      */
-    private static List<Sale> getSalesHistory(Date startDate, Date endDate)
+    public static List<Sale> getSalesHistory(Date startDate, Date endDate)
     {
         System.out.println("Retrieving sales history...");
+
+        String sql = "SELECT id, customer_name, sale_date, item_id, quantity " +
+                     "FROM sales " +
+                     "WHERE sale_date BETWEEN ? AND ? " +
+                     "ORDER BY sale_date ASC";
+
+        List<Object> params = List.of(
+                new Timestamp(startDate.getTime()),
+                new Timestamp(endDate.getTime())
+        );
+
+        List<Map<String, Object>> sales = Database.select(sql, params);
+        List<Sale> formattedSales = new ArrayList<>();
+
+        for(Map<String, Object> row : sales)
+        {
+            String customerName = (String) row.get("customer_name");
+            Timestamp ts = (Timestamp) row.get("sale_date");
+            LocalDateTime saleTime = ts != null ? ts.toLocalDateTime() : null;
+
+            int itemId = ((Number) row.get("item_id")).intValue();
+            int quantity = ((Number) row.get("quantity")).intValue();
+
+            Sale tempSale = new Sale();
+            tempSale.setCustomerName(customerName);
+            tempSale.setSaleTime(saleTime);
+
+            Item saleItem = InventorySys.getItemById(itemId);
+
+            if (saleItem != null)
+                tempSale.addItem(saleItem, quantity);
+            else
+                System.out.println("Warning: no item found for id " + itemId);
+
+            formattedSales.add(tempSale);
+        }
+
         System.out.println("Sales history retrieved");
-        return List.of();
+        return formattedSales;
     }
 }

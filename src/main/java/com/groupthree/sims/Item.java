@@ -1,8 +1,5 @@
 package com.groupthree.sims;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * Represents an item that can be sold or stored in inventory.
  */
