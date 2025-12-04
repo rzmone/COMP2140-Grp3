@@ -35,9 +35,11 @@ public class SaleSys
      * @return {@code true} if the sale is processed successfully;
      *         {@code false} if validation fails or the sale cannot be processed
      */
-    public static boolean processSale(String customerName, Date date, Sale sale)
+    public static boolean processSale(String username, String customerName, Date date, Sale sale)
     {
         System.out.println("Processing sale...");
+
+        // check for user role
 
         // check for stock availability
         if (!validateSale(sale))
@@ -76,7 +78,8 @@ public class SaleSys
     {
         System.out.println("Validating sale...");
 
-        for (Map.Entry<Item, Integer> item : sale.getItems().entrySet()) {
+        for (Map.Entry<Item, Integer> item : sale.getItems().entrySet())
+        {
             // TODO: Check available stock
             // return false if stock for an item is insufficient
         }

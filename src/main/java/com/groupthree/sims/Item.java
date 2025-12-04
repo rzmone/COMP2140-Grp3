@@ -8,7 +8,7 @@ import java.util.Map;
  */
 public class Item {
 
-    private String id;
+    private int id;
     private String name;
     private double price;
 
@@ -19,14 +19,14 @@ public class Item {
      * @param name  the name of the item
      * @param price the price of the item
      */
-    public Item(String id, String name, double price) {
+    public Item(int id, String name, double price) {
         this.id = id;
         this.name = name;
         this.price = price;
     }
 
     /** @return the item identifier */
-    public String getId() {
+    public int getId() {
         return id;
     }
 
@@ -57,7 +57,7 @@ public class Item {
      */
     public static Item getItemById(String id) {
         List<Map<String, Object>> results =
-            Database.select("SELECT * FROM Item WHERE id = '" + id + "'");
+            Database.select("SELECT * FROM Items WHERE id = '" + id + "'");
 
         if (results.isEmpty()) {
             return null;
@@ -66,7 +66,39 @@ public class Item {
         Map<String, Object> row = results.get(0);
 
         return new Item(
-            (String) row.get("id"),
+            (int) row.get("id"),
+            (String) row.get("name"),
+            (double) row.get("price")  // correct type
+        );
+    }
+
+    /**
+     * Retrieves an item from the database using its name.
+     *
+     * <p>This method performs a lookup query and returns a fully constructed
+     * {@code Item} instance based on the result.</p>
+     *
+     * <p><b>Example Usage:</b></p>
+     * <pre>{@code
+     * Item item = Item.getItemByName("Widget");
+     * System.out.println(item.getId());
+     * }</pre>
+     *
+     * @param name the name of the item to retrieve
+     * @return the matching item, or {@code null} if no item is found
+     */
+    public static Item getItemByName(String name) {
+        List<Map<String, Object>> results =
+            Database.select("SELECT * FROM Items WHERE name = '" + name + "'");
+
+        if (results.isEmpty()) {
+            return null;
+        }
+
+        Map<String, Object> row = results.get(0);
+
+        return new Item(
+            (int) row.get("id"),
             (String) row.get("name"),
             (double) row.get("price")  // correct type
         );

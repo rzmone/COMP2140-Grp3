@@ -1,8 +1,32 @@
 package com.groupthree.sims;
 
 import java.util.*;
+import java.sql.*;
 
 public class Database {
+
+    private static final String URL = "jdbc:mysql://localhost:3306/sims?useSSL=false&serverTimezone=UTC";
+    private static final String USER = "root";
+    private static final String PASSWORD = "Fifa201!";
+
+    static
+    {
+        try
+        {
+            // Make sure the MySQL driver is loaded (for older JDBC setups).
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } 
+        catch (ClassNotFoundException e) 
+        {
+            System.err.println("MySQL JDBC driver not found.");
+            e.printStackTrace();
+        }
+    }
+
+    private static Connection getConnection() throws SQLException
+    {
+        return DriverManager.getConnection(URL, USER, PASSWORD);
+    }
 
     /**
      * Executes a read operation and retrieves data from the database.
@@ -25,16 +49,68 @@ public class Database {
      * @return a list of result rows, each represented as a map of column names
      *         to values; never {@code null}
      */
-    public static List<Map<String, Object>> select(String query) {
+    public static List<Map<String, Object>> select(String query)
+    {
+        List<Map<String, Object>> results = new ArrayList<>();
+
         System.out.println("Querying the database...");
-        System.out.println("Query executed successfully.");
-        return Collections.emptyList(); // pretend no results
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            ResultSetMetaData meta = rs.getMetaData();
+            int columnCount = meta.getColumnCount();
+
+            while (rs.next())
+            {
+                Map<String, Object> row = new HashMap<>();
+                for (int i = 1; i <= columnCount; i++)
+                {
+                    String columnName = meta.getColumnLabel(i);
+                    Object value = rs.getObject(i);
+                    row.put(columnName, value);
+                }
+                results.add(row);
+            }
+
+            System.out.println("Query executed successfully.");
+        }
+        catch (SQLException e)
+        {
+            System.err.println("Error executing select query:");
+            e.printStackTrace();
+        }
+
+        return results;
     }
 
-    public static List<Map<String, Object>> selectAll(String tableName) {
+    /**
+     * Retrieves all records from the specified table.
+     *
+     * <p>This method performs a simple selection of all rows and columns from
+     * the given table name.</p>
+     *
+     * <p><b>Example Usage:</b></p>
+     * <pre>{@code
+     * List<Map<String, Object>> results = Database.selectAll("students");
+     *
+     * for (Map<String, Object> row : results) {
+     *     System.out.println("ID: " + row.get("id"));
+     *     System.out.println("Name: " + row.get("name"));
+     *     System.out.println("Age: " + row.get("age"));
+     * }
+     * }</pre>
+     *
+     * @param tableName the name of the table from which to retrieve records
+     * @return a list of result rows, each represented as a map of column names
+     *         to values; never {@code null}
+     */
+    public static List<Map<String, Object>> selectAll(String tableName)
+    {
         System.out.println("Selecting all from " + tableName + "...");
-        System.out.println("Selection executed successfully.");
-        return Collections.emptyList(); // pretend no results
+        String sql = "SELECT * FROM " + tableName;
+        return select(sql);
     }
 
     /**
@@ -63,10 +139,55 @@ public class Database {
      * @param values a map of column names to values representing the new record
      * @return the number of records inserted
      */
-    public static int insert(String tableName, Map<String, Object> values) {
+    public static int insert(String tableName, Map<String, Object> values)
+    {
+        if (values == null || values.isEmpty())
+        {
+            System.out.println("No values provided for insert.");
+            return 0;
+        }
+
         System.out.println("Inserting into the database...");
-        System.out.println("Inserted successfully.");
-        return 1; // pretend one row inserted
+
+        StringBuilder sql = new StringBuilder("INSERT INTO ");
+        sql.append(tableName).append(" (");
+
+        StringBuilder placeholders = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+
+        // Build column list and placeholders
+        for (String column : values.keySet())
+        {
+            if (!params.isEmpty())
+            {
+                sql.append(", ");
+                placeholders.append(", ");
+            }
+
+            sql.append(column);
+            placeholders.append("?");
+            params.add(values.get(column));
+        }
+
+        sql.append(") VALUES (").append(placeholders).append(")");
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++)
+            {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            int affected = ps.executeUpdate();
+            System.out.println("Inserted successfully. Rows affected: " + affected);
+            return affected;
+
+        } catch (SQLException e) {
+            System.err.println("Error executing insert:");
+            e.printStackTrace();
+            return 0;
+        }
     }
 
     /**
@@ -99,10 +220,49 @@ public class Database {
      * @param whereClause the condition used to select which records to update
      * @return the number of records updated
      */
-    public static int update(String tableName, Map<String, Object> values, String whereClause) {
+    public static int update(String tableName, Map<String, Object> values, String whereClause)
+    {
+        if (values == null || values.isEmpty()) {
+            System.out.println("No values provided for update.");
+            return 0;
+        }
+
         System.out.println("Updating the database...");
-        System.out.println("Updated successfully.");
-        return 1; // pretend one row updated
+
+        StringBuilder sql = new StringBuilder("UPDATE ");
+        sql.append(tableName).append(" SET ");
+
+        List<Object> params = new ArrayList<>();
+        boolean first = true;
+
+        for (String column : values.keySet()) {
+            if (!first) {
+                sql.append(", ");
+            }
+            sql.append(column).append(" = ?");
+            params.add(values.get(column));
+            first = false;
+        }
+
+        if (whereClause != null && !whereClause.trim().isEmpty()) {
+            sql.append(" WHERE ").append(whereClause);
+        }
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            int affected = ps.executeUpdate();
+            System.out.println("Updated successfully. Rows affected: " + affected);
+            return affected;
+        } catch (SQLException e) {
+            System.err.println("Error executing update:");
+            e.printStackTrace();
+            return 0;
+        }
     }
 
     /**
@@ -135,9 +295,27 @@ public class Database {
      * @param whereClause the condition used to select which records to delete
      * @return the number of records deleted
      */
-    public static int delete(String tableName, String whereClause) {
+    public static int delete(String tableName, String whereClause)
+    {
         System.out.println("Deleting from the database...");
-        System.out.println("Deleted successfully.");
-        return 1; // pretend one row deleted
+
+        StringBuilder sql = new StringBuilder("DELETE FROM ");
+        sql.append(tableName);
+
+        if (whereClause != null && !whereClause.trim().isEmpty()) {
+            sql.append(" WHERE ").append(whereClause);
+        }
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int affected = ps.executeUpdate();
+            System.out.println("Deleted successfully. Rows affected: " + affected);
+            return affected;
+        } catch (SQLException e) {
+            System.err.println("Error executing delete:");
+            e.printStackTrace();
+            return 0;
+        }
     }
 }
