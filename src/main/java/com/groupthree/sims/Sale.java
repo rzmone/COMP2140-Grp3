@@ -22,7 +22,7 @@ class Sale
      * The key represents the item, and the value represents the quantity.
      */
     private Map<Item, Integer> items;
-
+    private String customerName;
     private LocalDateTime saleTime;
 
     /**
@@ -31,6 +31,11 @@ class Sale
     public Sale()
     {
         this.items = new HashMap<>();
+    }
+
+    public String getCustomerName()
+    {
+        return customerName;
     }
 
     /**
@@ -42,6 +47,11 @@ class Sale
         this.saleTime = LocalDateTime.now();
     }
 
+    public LocalDateTime getSaleTime()
+    {
+        return saleTime;
+    }
+
     /**
      * Adds an item and its quantity to the sale. If the item already exists
      * in the sale, its quantity will be replaced with the new value.
@@ -51,6 +61,12 @@ class Sale
      */
     public void addItem(Item item, int quantity)
     {
+        if (items.size() > 1)
+        {
+            System.out.println("Cannot add more than two different items to a single sale.");
+            return;
+        }
+
         items.put(item, quantity);
     }
 
@@ -85,6 +101,28 @@ class Sale
     public Map<Item, Integer> getItems()
     {
         return Collections.unmodifiableMap(items);
+    }
+
+    public Item getSingleItem()
+    {
+        if (items.size() != 1)
+        {
+            System.out.println("Error: Sale does not contain exactly one item.");
+            return null;
+        }
+
+        return items.keySet().iterator().next();
+    }
+
+    public int getSingleItemQuantity()
+    {
+        if (items.size() != 1)
+        {
+            System.out.println("Error: Sale does not contain exactly one item.");
+            return 0;
+        }
+
+        return items.values().iterator().next();
     }
 
     /**

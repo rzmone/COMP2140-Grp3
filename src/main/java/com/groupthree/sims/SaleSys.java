@@ -1,6 +1,7 @@
 package com.groupthree.sims;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,11 +74,12 @@ public class SaleSys
             // record sale in history module
             HistorySys.logSales(user, sale);
 
-            // TODO: Add sale to the database
+            //Add sale to the database
+            saveSaleToDatabase(sale);
 
             System.out.println("Sale processed");
             sale.completeSale();
-            
+
             return SaleResultStatus.SUCCESS;
         }
         catch (Exception e)
@@ -85,6 +87,17 @@ public class SaleSys
             e.printStackTrace();
             return SaleResultStatus.ERROR;
         }
+    }
+
+    private static void saveSaleToDatabase(Sale sale)
+    {
+        Map<String, Object> values = new HashMap<>();
+        values.put("customer_name", sale.getCustomerName());
+        values.put("sale_date", java.sql.Timestamp.valueOf(sale.getSaleTime()));
+        values.put("item_id", sale.getSingleItem().getId());
+        values.put("quantity", sale.getSingleItemQuantity());
+
+        Database.insert("sales", null);
     }
 
     /**
