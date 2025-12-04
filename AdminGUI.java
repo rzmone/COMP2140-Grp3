@@ -1,257 +1,140 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * AdminGUI
- *  - Admin console for Sweetcraft.
- *  - Admins can view security alerts and system history logs.
- *
- * Uses hard-coded demo data.
- * Hooks to SecuritySys / HistorySys / AlertSys are commented out.
+ *  - Used by managers/administrators.
+ *  - UI only: manage users, view reports, view alerts.
  */
 public class AdminGUI extends JFrame {
 
-    private String employeeId;
-    private String managerName;
+    private final String employeeId;
+    private final String employeeName;
 
-    private JTextArea outputArea;
+    public AdminGUI(String employeeId, String employeeName) {
+        super("Sweetcraft - Admin / Manager");
+        this.employeeId = employeeId;
+        this.employeeName = employeeName;
+        buildUI();
+    }
 
-    /*
-     * ================== BACKEND HOOKS (for later) ==================
-     *
-     * // Fields:
-     * private SecuritySys securitySys;
-     * private HistorySys historySys;
-     * private AlertSys alertSys;
-     *
-     * // Constructor for full integration:
-     * public AdminGUI(String empId, String name,
-     *                 SecuritySys sec, HistorySys hist, AlertSys alert) {
-     *     this(empId, name);
-     *     this.securitySys = sec;
-     *     this.historySys  = hist;
-     *     this.alertSys    = alert;
-     * }
-     */
-
-    public AdminGUI(String empId, String managerName) {
-        super("Sweetcraft Admin Console");
-
-        this.employeeId = empId;
-        this.managerName = managerName;
-
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(650, 450);
+    private void buildUI() {
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setSize(800, 500);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
 
-        // ===== Top: admin info =====
-        JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        infoPanel.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+        BackgroundPanel bg = new BackgroundPanel("sweetcraftlogo.jpeg");
+        bg.setLayout(new BorderLayout());
+        setContentPane(bg);
 
-        JLabel infoLabel = new JLabel(
-                "Logged in as: " + managerName + "  (ID: " + employeeId + ")"
+        JLabel title = new JLabel("Admin Dashboard - " + employeeName, SwingConstants.CENTER);
+        title.setFont(SweetcraftTheme.TITLE_FONT);
+        title.setForeground(SweetcraftTheme.TITLE_BLUE);
+        title.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        add(title, BorderLayout.NORTH);
+
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.setOpaque(false);
+
+        tabs.addTab("Users", createUsersPanel());
+        tabs.addTab("Reports", createReportsPanel());
+        tabs.addTab("Alerts", createAlertsPanel());
+
+        add(tabs, BorderLayout.CENTER);
+    }
+
+    private JPanel createUsersPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);
+
+        DefaultTableModel model = new DefaultTableModel(new Object[]{"User ID", "Name", "Role"}, 0);
+        JTable table = new JTable(model);
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.getViewport().setOpaque(false);
+        scroll.setOpaque(false);
+
+        JPanel top = new JPanel();
+        top.setOpaque(false);
+        JButton addUserBtn = new JButton("Add User");
+        JButton editUserBtn = new JButton("Edit User");
+        JButton resetPwdBtn = new JButton("Reset Password");
+        SweetcraftTheme.stylePrimaryButton(addUserBtn);
+        SweetcraftTheme.stylePrimaryButton(editUserBtn);
+        SweetcraftTheme.stylePrimaryButton(resetPwdBtn);
+
+        top.add(addUserBtn);
+        top.add(editUserBtn);
+        top.add(resetPwdBtn);
+
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        // UI-only: add a dummy user when Add User clicked
+        addUserBtn.addActionListener(e ->
+                model.addRow(new Object[]{"EMP001", "Sample User", "Manager"}));
+
+        return panel;
+    }
+
+    private JPanel createReportsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);
+
+        JTextArea area = new JTextArea(
+                "Reports area.\n\nGenerate inventory, production, and sales reports here."
         );
-        infoLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        infoPanel.add(infoLabel);
+        area.setEditable(false);
+        JScrollPane scroll = new JScrollPane(area);
+        scroll.getViewport().setOpaque(false);
+        scroll.setOpaque(false);
 
-        add(infoPanel, BorderLayout.NORTH);
+        JButton generateBtn = new JButton("Generate Dummy Report");
+        SweetcraftTheme.stylePrimaryButton(generateBtn);
 
-        // ===== Center: output area =====
-        outputArea = new JTextArea();
-        outputArea.setEditable(false);
-        JScrollPane scroll = new JScrollPane(outputArea);
-        add(scroll, BorderLayout.CENTER);
+        JPanel top = new JPanel();
+        top.setOpaque(false);
+        top.add(generateBtn);
 
-        // ===== Bottom: buttons =====
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
 
-        JButton viewAlertsButton  = new JButton("View Security Alerts");
-        JButton viewHistoryButton = new JButton("View History Logs");
-        JButton manageUsersButton = new JButton("Manage Users");
-        JButton clearButton       = new JButton("Clear");
-        JButton exitButton        = new JButton("Exit");
+        generateBtn.addActionListener(e ->
+                JOptionPane.showMessageDialog(this,
+                        "Report generation is UI-only. Connect to HistorySys/InventorySys later."));
 
-        Color lightYellow = new Color(255, 255, 153);
-        viewAlertsButton.setBackground(lightYellow);
-        viewHistoryButton.setBackground(lightYellow);
-        manageUsersButton.setBackground(lightYellow);
-        clearButton.setBackground(lightYellow);
-        exitButton.setBackground(lightYellow);
-
-        viewAlertsButton.setOpaque(true);
-        viewHistoryButton.setOpaque(true);
-        manageUsersButton.setOpaque(true);
-        clearButton.setOpaque(true);
-        exitButton.setOpaque(true);
-
-        buttonPanel.add(viewAlertsButton);
-        buttonPanel.add(viewHistoryButton);
-        buttonPanel.add(manageUsersButton);
-        buttonPanel.add(clearButton);
-        buttonPanel.add(exitButton);
-
-        add(buttonPanel, BorderLayout.SOUTH);
-
-        // Button actions
-        viewAlertsButton.addActionListener(e -> showAlerts());
-        viewHistoryButton.addActionListener(e -> showHistory());
-        manageUsersButton.addActionListener(e -> manageUsers());
-        clearButton.addActionListener(e -> outputArea.setText(""));
-        exitButton.addActionListener(e -> dispose());
+        return panel;
     }
 
-    // =============== DEMO ACTIONS (with hooks commented) ===============
+    private JPanel createAlertsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);
 
-    /**
-     * Shows demo security alerts.
-     * Later this will call SecuritySys / AlertSys.
-     */
-    public void showAlerts() {
-        appendLine("=== Security Alerts ===");
+        DefaultTableModel model = new DefaultTableModel(
+                new Object[]{"Time", "Type", "Message"}, 0);
+        JTable table = new JTable(model);
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.getViewport().setOpaque(false);
+        scroll.setOpaque(false);
 
-        /*
-         * LATER (real system):
-         *
-         * if (securitySys != null) {
-         *     for (String alert : securitySys.getActiveAlerts()) {
-         *         appendLine(alert);
-         *     }
-         * }
-         */
+        JButton refreshBtn = new JButton("Load Sample Alerts");
+        SweetcraftTheme.stylePrimaryButton(refreshBtn);
 
-        appendLine("[HIGH]  Multiple failed login attempts on admin account.");
-        appendLine("[MEDIUM] POS terminal #3 accessed after hours.");
-        appendLine("[LOW]   Password for 'factory01' expires in 3 days.");
-        appendLine("--------------------------------------------------");
-    }
+        JPanel top = new JPanel();
+        top.setOpaque(false);
+        top.add(refreshBtn);
 
-    /**
-     * Shows demo history logs.
-     * Later this will call HistorySys.
-     */
-    public void showHistory() {
-        appendLine("=== System History ===");
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
 
-        /*
-         * LATER (real system):
-         *
-         * if (historySys != null) {
-         *     for (String line : historySys.getRecentEvents()) {
-         *         appendLine(line);
-         *     }
-         * }
-         */
-
-        appendLine("2025-12-02 09:15  Batch #1245 recorded by EMP003.");
-        appendLine("2025-12-02 09:45  Sale #657 total $12,500.00 by ACCT101.");
-        appendLine("2025-12-02 10:05  Inventory adjustment: -50 damaged units (500ml).");
-        appendLine("2025-12-02 10:30  New user 'factory07' added by ADMIN001.");
-        appendLine("--------------------------------------------------");
-    }
-
-    /**
-     * Demo user management view.
-     * Later this could call SecuritySys / User repository.
-     */
-    public void manageUsers() {
-        appendLine("=== User Management (DEMO) ===");
-
-        /*
-         * LATER (real system):
-         *
-         * if (securitySys != null) {
-         *     for (User u : securitySys.getAllUsers()) {
-         *         appendLine(u.toString());
-         *     }
-         * }
-         */
-
-        appendLine("ID: ADMIN001  | Name: Shequan McCalla  | Role: ADMIN");
-        appendLine("ID: ACCT101   | Name: Jane Brown       | Role: ACCOUNTS");
-        appendLine("ID: FACT001   | Name: John Smith       | Role: FACTORY");
-        appendLine("--------------------------------------------------");
-    }
-
-    private void appendLine(String text) {
-        outputArea.append(text + "\n");
-    }
-
-    // =============== LOGIN + MAIN ===============
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-
-            // One dialog with ID, password, manager name
-            JTextField idField = new JTextField();
-            JPasswordField passwordField = new JPasswordField();
-            JTextField nameField = new JTextField();
-
-            JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5));
-            panel.add(new JLabel("User ID:"));
-            panel.add(idField);
-            panel.add(new JLabel("User password:"));
-            panel.add(passwordField);
-            panel.add(new JLabel("Manager name:"));
-            panel.add(nameField);
-
-            int result = JOptionPane.showConfirmDialog(
-                    null,
-                    panel,
-                    "Admin Login",
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE
-            );
-
-            if (result != JOptionPane.OK_OPTION) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Login cancelled. Access denied.",
-                        "Access Denied",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            String empId       = idField.getText().trim();
-            String password    = new String(passwordField.getPassword()).trim();
-            String managerName = nameField.getText().trim();
-
-            if (empId.isEmpty() || password.isEmpty() || managerName.isEmpty()) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "All fields are required. Access denied.",
-                        "Access Denied",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            // Temporary hard-coded credentials
-            boolean allowed =
-                    (empId.equals("ADMIN001") && password.equals("admin123")) ||
-                    (empId.equals("MGR001")   && password.equals("mgr123"));
-
-            /*
-             * LATER (real system):
-             *
-             * boolean allowed = securitySys.validateAdmin(empId, password, managerName);
-             */
-
-            if (!allowed) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Invalid credentials. You are not authorized to access the Admin system.",
-                        "Access Denied",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            AdminGUI gui = new AdminGUI(empId, managerName);
-            gui.setVisible(true);
+        refreshBtn.addActionListener(e -> {
+            model.setRowCount(0);
+            model.addRow(new Object[]{"10:15 AM", "Low Stock",
+                    "Bottle X500 below threshold."});
+            model.addRow(new Object[]{"2:40 PM", "Quality",
+                    "Defect rate exceeded 10% on Line 3."});
         });
+
+        return panel;
     }
 }
