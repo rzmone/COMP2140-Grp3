@@ -14,8 +14,8 @@ import java.util.Map;
  * external code cannot modify the underlying data structure directly. Only
  * controlled updates through {@link #addItem(Item, int)} are permitted.</p>
  */
-class Sale {
-
+class Sale
+{
     /** 
      * Stores the items included in the sale along with their quantities.
      * The key represents the item, and the value represents the quantity.
@@ -25,7 +25,8 @@ class Sale {
     /**
      * Constructs a new, empty sale.
      */
-    public Sale() {
+    public Sale()
+    {
         this.items = new HashMap<>();
     }
 
@@ -36,7 +37,8 @@ class Sale {
      * @param item     the item being added
      * @param quantity the quantity of the item
      */
-    public void addItem(Item item, int quantity) {
+    public void addItem(Item item, int quantity)
+    {
         items.put(item, quantity);
     }
 
@@ -48,7 +50,8 @@ class Sale {
      *
      * @return the total amount of the sale
      */
-    public double getTotalAmount() {
+    public double getTotalAmount()
+    {
         double sum = 0;
 
         for (Map.Entry<Item, Integer> entry : items.entrySet()) {
@@ -67,7 +70,8 @@ class Sale {
      *
      * @return a read-only map of items to their quantities
      */
-    public Map<Item, Integer> getItems() {
+    public Map<Item, Integer> getItems()
+    {
         return Collections.unmodifiableMap(items);
     }
 
@@ -78,11 +82,13 @@ class Sale {
      * @return a string describing the sale details
      */
     @Override
-    public String toString() {
+    public String toString()
+    {
         StringBuilder sb = new StringBuilder();
         sb.append("Sale Details:\n");
 
-        for (Map.Entry<Item, Integer> entry : items.entrySet()) {
+        for (Map.Entry<Item, Integer> entry : items.entrySet())
+        {
             sb.append("Item: ").append(entry.getKey().getName())
               .append(", Quantity: ").append(entry.getValue())
               .append(", Price: ").append(entry.getKey().getPrice())
