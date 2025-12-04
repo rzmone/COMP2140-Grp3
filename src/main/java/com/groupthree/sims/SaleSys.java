@@ -76,7 +76,8 @@ public class SaleSys
     {
         System.out.println("Validating sale...");
 
-        for (Map.Entry<Item, Integer> item : sale.getItems().entrySet()) {
+        for (Map.Entry<Item, Integer> item : sale.getItems().entrySet())
+        {
             // TODO: Check available stock
             // return false if stock for an item is insufficient
         }
