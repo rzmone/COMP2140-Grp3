@@ -76,6 +76,8 @@ public class SaleSys
             // TODO: Add sale to the database
 
             System.out.println("Sale processed");
+            sale.completeSale();
+            
             return SaleResultStatus.SUCCESS;
         }
         catch (Exception e)

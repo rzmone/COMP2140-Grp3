@@ -1,5 +1,6 @@
 package com.groupthree.sims;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,12 +23,23 @@ class Sale
      */
     private Map<Item, Integer> items;
 
+    private LocalDateTime saleTime;
+
     /**
      * Constructs a new, empty sale.
      */
     public Sale()
     {
         this.items = new HashMap<>();
+    }
+
+    /**
+     * Marks the sale as completed by setting the sale time to the current
+     * date and time.
+     */
+    public void completeSale()
+    {
+        this.saleTime = LocalDateTime.now();
     }
 
     /**
