@@ -35,31 +35,54 @@ public class SaleSys
      * @return {@code true} if the sale is processed successfully;
      *         {@code false} if validation fails or the sale cannot be processed
      */
-    public static boolean processSale(String username, String customerName, Date date, Sale sale)
+    public static SaleResultStatus processSale(User user, String customerName, Date date, Sale sale)
     {
         System.out.println("Processing sale...");
 
-        // check for user role
+        // Check for user role / privileges
+        if (user == null || !user.isActive())
+        {
+            System.out.println("User is null or inactive.");
+            return SaleResultStatus.NO_PRIVILEGE;
+        }
+
+        if (!SecuritySys.canAccessPOSUI(user))
+        {
+            System.out.println("User does not have POS privileges.");
+            return SaleResultStatus.NO_PRIVILEGE;
+        }
 
         // check for stock availability
         if (!validateSale(sale))
         {
-            // TODO: log error on GUI
             System.out.println("Sale validation failed. Cannot process sale.");
-            return false;
+            return SaleResultStatus.OUT_OF_STOCK;
         }
 
-        // reduce stock
-        for (Map.Entry<Item, Integer> item : sale.getItems().entrySet())
+        try
         {
-            // TODO: Call inventory module to reduce stock for each item
+            // reduce stock
+            for (Map.Entry<Item, Integer> entry : sale.getItems().entrySet())
+            {
+                Item item = entry.getKey();
+                int quantity = entry.getValue();
+
+                InventorySys.reduceStock(item.getName(), quantity);
+            }
+
+            // record sale in history module
+            HistorySys.logSales(user, sale);
+
+            // TODO: Add sale to the database
+
+            System.out.println("Sale processed");
+            return SaleResultStatus.SUCCESS;
         }
-
-        // TODO: Record sale in history module
-        // TODO: Add sale to the database
-
-        System.out.println("Sale processed");
-        return true;
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return SaleResultStatus.ERROR;
+        }
     }
 
     /**
@@ -80,8 +103,10 @@ public class SaleSys
 
         for (Map.Entry<Item, Integer> item : sale.getItems().entrySet())
         {
-            // TODO: Check available stock
-            // return false if stock for an item is insufficient
+            if (!InventorySys.validateStock(item.getKey().getName(), item.getValue()))
+            {
+                return false;
+            }
         }
 
         System.out.println("Sale validated");

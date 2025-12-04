@@ -1,119 +1,126 @@
 package com.groupthree.sims;
 
-import java.io.*;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * SecuritySys handles all user authentication, authorization,
  * and user-account management for the SIMS system.
  *
+ * Now backed by the database via the {@link Database} utility class.
+ *
  * Responsibilities:
- *  - Load and save user records from a persistent file
- *  - Create, update, and delete user accounts
+ *  - Create, update, and delete user accounts in the database
  *  - Authenticate login attempts
  *  - Enforce role-based access control for UI components
  */
 public class SecuritySys {
 
-    /** In-memory user store populated from file at startup */
-    private final List<User> users = new ArrayList<>();
-
-    /** Auto-incrementing ID used for newly added users */
-    private long nextUserId = 1;
-
-    /** Data file used to persist all user accounts */
-    private final File userFile;
-
-
     /**
-     * Creates a SecuritySys using the default "users.txt" file.
+     * Creates a SecuritySys using the database as the backing store.
      */
     public SecuritySys() {
-        this(new File("users.txt"));
+        // No file-based storage anymore; everything is in the DB
     }
-
-    /**
-     * Creates a SecuritySys using a custom file for loading/saving users.
-     *
-     * @param userFile file where user records are stored
-     */
-    public SecuritySys(File userFile) {
-        this.userFile = userFile;
-        loadUsersFromFile();
-    }
-
 
     /* ===========================================================
-       USER FILE HANDLING
+       INTERNAL HELPERS (DB MAPPING)
        =========================================================== */
 
-    /**
-     * Loads all user entries from the persistent user file, if it exists.
-     * Each line represents one user in the format:
-     *
-     *   id;username;password;role;email;active
-     *
-     * Malformed lines are skipped safely.
-     */
-    private void loadUsersFromFile() {
-        if (!userFile.exists()) {
-            return; // Start with an empty list on first run
-        }
-
-        try (BufferedReader br = new BufferedReader(new FileReader(userFile))) {
-            String line;
-
-            while ((line = br.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
-
-                String[] parts = line.split(";", -1);
-                if (parts.length < 6) continue;
-
-                long id             = Long.parseLong(parts[0]);
-                String username     = parts[1];
-                String password     = parts[2];
-                Role role           = Role.valueOf(parts[3]);
-                String email        = parts[4];
-                boolean active      = Boolean.parseBoolean(parts[5]);
-
-                User u = new User(id, username, password, role, email, active);
-                users.add(u);
-
-                // Ensure nextUserId is always ahead of the highest ID
-                if (id >= nextUserId) {
-                    nextUserId = id + 1;
-                }
-            }
-
-        } catch (IOException | IllegalArgumentException e) {
-            e.printStackTrace();
-        }
+    private static String escapeSql(String value) {
+        return value == null ? null : value.replace("'", "''");
     }
 
     /**
-     * Writes all users currently in memory back to the persistent file.
-     * This is called after every change to ensure local data remains synchronized.
+     * Maps a generic DB row (column name -> value) to a User object.
      */
-    private void saveUsersToFile() {
-        try (PrintWriter out = new PrintWriter(new FileWriter(userFile))) {
+    private static User mapRowToUser(Map<String, Object> row) {
+        if (row == null || row.isEmpty()) return null;
 
-            for (User u : users) {
-                String email = (u.getEmail() == null) ? "" : u.getEmail();
+        int id = ((Number) row.get("id")).intValue();
+        String username = (String) row.get("username");
+        String password = (String) row.get("password");
+        String roleStr = (String) row.get("role");
+        Role role = Role.valueOf(roleStr);
 
-                out.printf("%d;%s;%s;%s;%s;%b%n",
-                        u.getId(),
-                        u.getUsername(),
-                        u.getPassword(),
-                        u.getRole().name(),
-                        email,
-                        u.isActive());
+        String email = (String) row.get("email");
+
+        Object activeObj = row.get("active");
+        boolean active = false;
+        if (activeObj instanceof Boolean) {
+            active = (Boolean) activeObj;
+        } else if (activeObj instanceof Number) {
+            active = ((Number) activeObj).intValue() != 0;
+        } else if (activeObj instanceof String) {
+            active = Boolean.parseBoolean((String) activeObj);
+        }
+
+        User user = new User(id, username, password, role, email, active);
+
+        Object lastLoginObj = row.get("last_login_at");
+        if (lastLoginObj != null) {
+            LocalDateTime lastLoginAt = null;
+
+            if (lastLoginObj instanceof Timestamp) {
+                lastLoginAt = ((Timestamp) lastLoginObj).toLocalDateTime();
+            } else if (lastLoginObj instanceof LocalDateTime) {
+                lastLoginAt = (LocalDateTime) lastLoginObj;
+            } else if (lastLoginObj instanceof String) {
+                // Fallback if driver returns a String
+                lastLoginAt = LocalDateTime.parse((String) lastLoginObj);
             }
 
-        } catch (IOException e) {
-            e.printStackTrace();
+            if (lastLoginAt != null) {
+                user.setLastLoginAt(lastLoginAt);
+            }
         }
+
+        return user;
+    }
+
+    /**
+     * Loads a single user by username from the database.
+     */
+    public static User findUserByUsername(String username) {
+        if (username == null || username.isEmpty()) return null;
+
+        String escaped = escapeSql(username);
+        String sql = "SELECT * FROM users WHERE username = '" + escaped + "' LIMIT 1";
+
+        List<Map<String, Object>> rows = Database.select(sql);
+        if (rows.isEmpty()) return null;
+
+        return mapRowToUser(rows.get(0));
+    }
+
+    /**
+     * Loads a single user by ID from the database.
+     */
+    public static User findUserById(int id) {
+        String sql = "SELECT * FROM users WHERE id = " + id + " LIMIT 1";
+
+        List<Map<String, Object>> rows = Database.select(sql);
+        if (rows.isEmpty()) return null;
+
+        return mapRowToUser(rows.get(0));
+    }
+
+    /**
+     * Updates the last_login_at column in the database.
+     */
+    private static void updateLastLoginInDatabase(User user) {
+        if (user == null || user.getId() <= 0) return;
+
+        Map<String, Object> values = new HashMap<>();
+        // Convert to Timestamp explicitly for compatibility
+        values.put("last_login_at", Timestamp.valueOf(user.getLastLoginAt()));
+
+        String where = "id = " + user.getId();
+        Database.update("users", values, where);
     }
 
 
@@ -122,15 +129,26 @@ public class SecuritySys {
        =========================================================== */
 
     /**
-     * Creates a new active user account and stores it permanently.
+     * Creates a new active user account and stores it in the database.
      *
-     * @return the created User object
+     * @return the created User object (loaded back from DB), or null if insert failed
      */
-    public User createUser(String username, String password, Role role, String email) {
-        User user = new User(nextUserId++, username, password, role, email, true);
-        users.add(user);
-        saveUsersToFile();
-        return user;
+    public static User createUser(String username, String password, Role role, String email) {
+        Map<String, Object> values = new HashMap<>();
+        values.put("username", username);
+        values.put("password", password);
+        values.put("role", role.name());
+        values.put("email", email);
+        values.put("active", true);
+
+        int rows = Database.insert("users", values);
+        if (rows <= 0) {
+            System.err.println("Failed to insert user into database.");
+            return null;
+        }
+
+        // Reload the user from the database (assumes username is unique)
+        return findUserByUsername(username);
     }
 
     /**
@@ -138,98 +156,82 @@ public class SecuritySys {
      *
      * @return true if a user was removed, false otherwise
      */
-    public boolean deleteUserByUsername(String username) {
-        boolean removed = users.removeIf(u -> u.getUsername().equalsIgnoreCase(username));
-        if (removed) saveUsersToFile();
-        return removed;
+    public static boolean deleteUserByUsername(String username) {
+        String escaped = escapeSql(username);
+        int rows = Database.delete("users", "username = '" + escaped + "'");
+        return rows > 0;
     }
 
     /**
      * Deletes a user based on their numeric system ID.
      */
-    public boolean deleteUserById(long userId) {
-        boolean removed = users.removeIf(u -> u.getId() == userId);
-        if (removed) saveUsersToFile();
-        return removed;
+    public static boolean deleteUserById(int userId) {
+        int rows = Database.delete("users", "id = " + userId);
+        return rows > 0;
     }
 
     /**
      * Marks a user account as inactive (soft delete).
      */
-    public boolean deactivateUser(long userId) {
-        User user = findUserById(userId);
-        if (user == null) return false;
+    public static boolean deactivateUser(int userId) {
+        Map<String, Object> values = new HashMap<>();
+        values.put("active", false);
 
-        user.setActive(false);
-        saveUsersToFile();
-        return true;
+        int rows = Database.update("users", values, "id = " + userId);
+        return rows > 0;
     }
 
     /**
      * Updates a user's password.
      */
-    public boolean changePassword(long userId, String newPassword) {
-        User user = findUserById(userId);
-        if (user == null) return false;
+    public static boolean changePassword(int userId, String newPassword) {
+        Map<String, Object> values = new HashMap<>();
+        values.put("password", newPassword);
 
-        user.setPassword(newPassword);
-        saveUsersToFile();
-        return true;
+        int rows = Database.update("users", values, "id = " + userId);
+        return rows > 0;
     }
 
     /**
      * Assigns a new role to the selected user.
      */
-    public boolean updateUserRole(long userId, Role newRole) {
-        User user = findUserById(userId);
-        if (user == null) return false;
+    public static boolean updateUserRole(int userId, Role newRole) {
+        Map<String, Object> values = new HashMap<>();
+        values.put("role", newRole.name());
 
-        user.setRole(newRole);
-        saveUsersToFile();
-        return true;
+        int rows = Database.update("users", values, "id = " + userId);
+        return rows > 0;
     }
 
     /**
      * @return all users stored in the system (including inactive users)
      */
-    public List<User> listAllUsers() {
-        return new ArrayList<>(users);
+    public static List<User> listAllUsers() {
+        List<Map<String, Object>> rows = Database.selectAll("users");
+        List<User> users = new ArrayList<>();
+
+        for (Map<String, Object> row : rows) {
+            User u = mapRowToUser(row);
+            if (u != null) users.add(u);
+        }
+
+        return users;
     }
 
     /**
      * @return only users marked as active
      */
-    public List<User> listActiveUsers() {
-        List<User> active = new ArrayList<>();
-        for (User u : users) {
-            if (u.isActive()) active.add(u);
+    public static List<User> listActiveUsers() {
+        String sql = "SELECT * FROM users WHERE active = 1";
+        List<Map<String, Object>> rows = Database.select(sql);
+        List<User> users = new ArrayList<>();
+
+        for (Map<String, Object> row : rows) {
+            User u = mapRowToUser(row);
+            if (u != null) users.add(u);
         }
-        return active;
-    }
 
-
-    /* ===========================================================
-       USER LOOKUP HELPERS
-       =========================================================== */
-
-    /**
-     * @return user with the given ID or null if not found
-     */
-    public User findUserById(long id) {
-        for (User u : users) {
-            if (u.getId() == id) return u;
-        }
-        return null;
-    }
-
-    /**
-     * @return user with matching username (case-insensitive) or null if none exists
-     */
-    public User findUserByUsername(String username) {
-        for (User u : users) {
-            if (u.getUsername().equalsIgnoreCase(username)) return u;
-        }
-        return null;
+        return users;
     }
 
 
@@ -238,18 +240,18 @@ public class SecuritySys {
        =========================================================== */
 
     /**
-     * Verifies login credentials and updates last-login timestamp.
+     * Verifies login credentials and updates last-login timestamp in DB.
      *
      * @return the authenticated user, or null if login fails
      */
-    public User authenticate(String username, String password) {
+    public static User authenticate(String username, String password) {
         User user = findUserByUsername(username);
         if (user == null) return null;
         if (!user.isActive()) return null;
         if (!user.getPassword().equals(password)) return null;
 
         user.setLastLoginAt(LocalDateTime.now());
-        saveUsersToFile();
+        updateLastLoginInDatabase(user);
         return user;
     }
 
@@ -261,7 +263,7 @@ public class SecuritySys {
      *  - MANAGER can access SALES + PRODUCTION actions
      *  - Other roles must match exactly
      */
-    public boolean authorize(User user, Role requiredRole) {
+    public static boolean authorize(User user, Role requiredRole) {
         if (user == null || !user.isActive()) return false;
 
         Role userRole = user.getRole();
@@ -283,28 +285,28 @@ public class SecuritySys {
        =========================================================== */
 
     /** Only Admin + Manager can open the administrator interface. */
-    public boolean canAccessAdminUI(User user) {
+    public static boolean canAccessAdminUI(User user) {
         return user != null &&
                 user.isActive() &&
                 (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER);
     }
 
     /** POSUI can be accessed by Admin, Manager, and Sales. */
-    public boolean canAccessPOSUI(User user) {
+    public static boolean canAccessPOSUI(User user) {
         if (user == null || !user.isActive()) return false;
         Role r = user.getRole();
         return r == Role.ADMIN || r == Role.MANAGER || r == Role.SALES;
     }
 
     /** FactoryUI can be accessed by Admin, Manager, and Production staff. */
-    public boolean canAccessFactoryUI(User user) {
+    public static boolean canAccessFactoryUI(User user) {
         if (user == null || !user.isActive()) return false;
         Role r = user.getRole();
         return r == Role.ADMIN || r == Role.MANAGER || r == Role.PRODUCTION;
     }
 
     /** Only Admin + Manager are allowed to manage users. */
-    public boolean canManageUsers(User user) {
+    public static boolean canManageUsers(User user) {
         if (user == null || !user.isActive()) return false;
         return user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER;
     }
@@ -320,13 +322,13 @@ public class SecuritySys {
      * @return true only if the credentials are valid AND the user
      *         has admin-level access rights.
      */
-    public boolean validateAdmin(String empId, String password) {
+    public static boolean validateAdmin(String empId, String password) {
         User user = authenticate(empId, password);
         return canAccessAdminUI(user);
     }
 
     /** Convenience method for UI list display. */
-    public List<User> getAllUsers() {
+    public static List<User> getAllUsers() {
         return listAllUsers();
     }
 }

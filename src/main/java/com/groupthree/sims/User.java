@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class User {
 
     /** Unique system-generated numeric identifier */
-    private long id;
+    private int id;
 
     /** Employee ID / login name used for authentication */
     private String username;
@@ -39,7 +39,6 @@ public class User {
     /** Timestamp of the user's last successful login */
     private LocalDateTime lastLoginAt;
 
-
     /**
      * Constructs a new user account with all required information.
      *
@@ -50,7 +49,7 @@ public class User {
      * @param email     contact email
      * @param active    whether the account is enabled
      */
-    public User(long id,
+    public User(int id,
                 String username,
                 String password,
                 Role role,
@@ -70,8 +69,8 @@ public class User {
        Getters and Setters
        =========================================================== */
 
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
@@ -92,7 +91,6 @@ public class User {
     public void setLastLoginAt(LocalDateTime lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
     }
-
 
     /**
      * Provides a simplified string representation suitable for logs or UI lists.

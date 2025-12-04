@@ -25,7 +25,6 @@ public class POSGUI extends JFrame
     private JTextField customerField;
     private JTextField bottleTypeField;
     private JTextField quantityField;
-    private JTextField unitPriceField;
 
     private JTextArea outputArea;
 
@@ -127,23 +126,37 @@ public class POSGUI extends JFrame
         int quantity = Integer.parseInt(quantityField.getText().trim());
 
         Sale sale = new Sale();
-        Item bottle = Item.getItemByName(bottleType);
+        Item bottle = InventorySys.getItemByName(bottleType);
         sale.addItem(bottle, quantity);
-        
-        if(SaleSys.validateSale(sale))
+
+        User user = SecuritySys.findUserByUsername(username);
+
+        if (user == null)
         {
-            if(SaleSys.processSale(username, customer, new Date(), sale))
-            {
-                display("Sale recorded successfully. Total cost: $" + sale.getTotalAmount());
-            }
-            else
-            {
-                display("Error: Sale processing failed");
-            }
+            display("User does not exist");
+            return;
         }
-        else
+
+        // Let SaleSys handle privilege + stock logic
+        SaleResultStatus status = SaleSys.processSale(user, customer, new Date(), sale);
+
+        switch (status)
         {
-            display("Error: Item out of stock");
+            case SUCCESS:
+                display("Sale recorded successfully. Total cost: $" + sale.getTotalAmount());
+                break;
+
+            case NO_PRIVILEGE:
+                display("User does not have required privileges");
+                break;
+
+            case OUT_OF_STOCK:
+                display("Error: Item out of stock");
+                break;
+
+            case ERROR:
+            default:
+                display("Error: Sale processing failed");
         }
     }
 
