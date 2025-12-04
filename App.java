@@ -5,7 +5,7 @@ import java.util.Map;
 public class App
 {
     // Store valid usernames and passwords
-    private static final Map<String, String> users = new HashMap<>();
+    private static Map<String, String> users = new HashMap<>();
     
     static {
         // Initialize with some default users
