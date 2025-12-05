@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -28,25 +29,26 @@ public class HistorySys {
         values.put("details", log.getDetails());
         values.put("time", java.sql.Timestamp.valueOf(LocalDateTime.now()));
 
-        Database.insert("logs", values);
-        return log;
+        int logId = Database.insertWithPk("logs", values);
+
+        return new Log(logId, log.getUserID(), log.getDetails(), log.getTime());
     }
 
     // ============================================================
     // LOG MODIFICATION
     // ============================================================
-    public Log logModify(String details, User user)
+    public static Log logAny(User user, String title, String details)
     {
-        Log log = new Log("MODIFICATION: " + details, user.getId());
+        Log log = new Log(title.toUpperCase() + ": " + details, user.getId());
 
         Map<String, Object> values = new HashMap<>();
         values.put("userID", user.getId());
         values.put("details", log.getDetails());
         values.put("time", java.sql.Timestamp.valueOf(LocalDateTime.now()));
 
-        Database.insert("logs", values);
+        int logId = Database.insertWithPk("logs", values);
 
-        return log;
+        return new Log(logId, log.getUserID(), log.getDetails(), log.getTime());
     }
 
     public static List<Log> getAllHistory()
@@ -58,10 +60,22 @@ public class HistorySys {
             int id = (int) record.get("id");
             int userID = (int) record.get("userID");
             String details = (String) record.get("details");
-            String timeStr = (String) record.get("time");
-            LocalDateTime time = LocalDateTime.parse(timeStr, timeForm);
+            LocalDateTime logTime = null;
 
-            Log log = new Log(id, userID, details, time);
+            Object logTimeObj = record.get("time");
+            if (logTimeObj != null)
+            {
+                if (logTimeObj instanceof Timestamp) {
+                    logTime = ((Timestamp) logTimeObj).toLocalDateTime();
+                } else if (logTimeObj instanceof LocalDateTime) {
+                    logTime = (LocalDateTime) logTimeObj;
+                } else if (logTimeObj instanceof String) {
+                    // Fallback if driver returns a String
+                    logTime = LocalDateTime.parse((String) logTimeObj);
+                }
+            }
+
+            Log log = new Log(id, userID, details, logTime);
             logs.add(log);
         }
 
@@ -106,13 +120,21 @@ public class HistorySys {
         }
 
         String modDetails = String.format(
-                "EDITED Log ID: %s. Previous Details: [%s]. New Details: [%s]",
-                originalLogID,
+                "[EDITED] [%s]. | [PREVIOUSLY]: [%s]",
                 original.get().getDetails(),
                 newDetails
         );
 
-        return logModify(modDetails, user);
+        String where = "id = " + originalLogID;
+        boolean result = Database.update("logs", Map.of("details", modDetails), where) > 1;
+
+        if (!result)
+        {
+            System.err.println("Error: Failed to edit log ID " + originalLogID);
+            return null;
+        }
+
+        return new Log(originalLogID, user.getId(), modDetails, original.get().getTime());
     }
 
 

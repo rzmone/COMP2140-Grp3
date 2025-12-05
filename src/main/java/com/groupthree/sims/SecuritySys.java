@@ -38,7 +38,8 @@ public class SecuritySys {
     /**
      * Maps a generic DB row (column name -> value) to a User object.
      */
-    private static User mapRowToUser(Map<String, Object> row) {
+    private static User mapRowToUser(Map<String, Object> row)
+    {
         if (row == null || row.isEmpty()) return null;
 
         int id = ((Number) row.get("id")).intValue();

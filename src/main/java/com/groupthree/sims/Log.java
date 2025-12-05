@@ -30,9 +30,9 @@ public class Log {
         this.time = time;
     }
 
-    public Log(String detauls, int userID)
+    public Log(String details, int userID)
     {
-        this.details = detauls;
+        this.details = details;
         this.userID = userID;
     }
 

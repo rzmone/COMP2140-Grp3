@@ -228,6 +228,91 @@ public class Database {
     }
 
     /**
+     * Inserts a new record into the specified table and returns the generated primary key.
+     *
+     * <p>The {@code values} map represents column names and their corresponding
+     * values for the new record. The method returns the auto-generated primary
+     * key value for the inserted row, or {@code -1} if the insert fails or no
+     * key is generated.</p>
+     *
+     * @param tableName the name of the table into which the record will be inserted
+     * @param values    a map of column names to values representing the new record
+     * @return the generated primary key, or -1 if the insert failed
+     */
+    public static int insertWithPk(String tableName, Map<String, Object> values)
+    {
+        if (values == null || values.isEmpty())
+        {
+            System.out.println("No values provided for insertWithPk.");
+            return -1;
+        }
+
+        System.out.println("Inserting into the database (returning PK)...");
+
+        StringBuilder sql = new StringBuilder("INSERT INTO ");
+        sql.append(tableName).append(" (");
+
+        StringBuilder placeholders = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+
+        // Build column list and placeholders
+        for (String column : values.keySet())
+        {
+            if (!params.isEmpty())
+            {
+                sql.append(", ");
+                placeholders.append(", ");
+            }
+
+            sql.append(column);
+            placeholders.append("?");
+            params.add(values.get(column));
+        }
+
+        sql.append(") VALUES (").append(placeholders).append(")");
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     sql.toString(),
+                     Statement.RETURN_GENERATED_KEYS)) {
+
+            for (int i = 0; i < params.size(); i++)
+            {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            int affected = ps.executeUpdate();
+            if (affected == 0)
+            {
+                System.out.println("InsertWithPk: no rows affected.");
+                return -1;
+            }
+
+            try (ResultSet rs = ps.getGeneratedKeys())
+            {
+                if (rs.next())
+                {
+                    int pk = rs.getInt(1); // first generated column
+                    System.out.println("Inserted successfully. Generated PK: " + pk);
+                    return pk;
+                }
+                else
+                {
+                    System.out.println("InsertWithPk: insert succeeded but no key returned.");
+                    return -1;
+                }
+            }
+
+        }
+        catch (SQLException e)
+        {
+            System.err.println("Error executing insertWithPk:");
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    /**
      * Updates existing records in the specified table.
      *
      * <p>The {@code values} map represents the columns to be updated and their

@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 public class Alert {
 
     /** Unique identifier for the alert entry */
-    private long id;
+    private int id = -1;
 
     /** Category/type of alert (e.g., INVENTORY, SECURITY, SYSTEM, PRODUCTION) */
     private AlertType type;
@@ -63,7 +63,7 @@ public class Alert {
      * @param actualValue     actual measured value (nullable)
      * @param createdAt       timestamp when the alert was generated
      */
-    public Alert(long id,
+    public Alert(int id,
                  AlertType type,
                  AlertSeverity severity,
                  String message,
@@ -85,13 +85,33 @@ public class Alert {
         this.acknowledged = false;
     }
 
+     public Alert(AlertType type,
+                 AlertSeverity severity,
+                 String message,
+                 String relatedEntity,
+                 Double thresholdValue,
+                 Double actualValue,
+                 LocalDateTime createdAt) {
+
+        this.type = type;
+        this.severity = severity;
+        this.message = message;
+        this.relatedEntity = relatedEntity;
+        this.thresholdValue = thresholdValue;
+        this.actualValue = actualValue;
+        this.createdAt = createdAt;
+
+        // Alerts start unacknowledged
+        this.acknowledged = false;
+    }
+
 
     /* ===========================================================
        Getters and Setters
        =========================================================== */
 
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public AlertType getType() { return type; }
     public void setType(AlertType type) { this.type = type; }

@@ -184,6 +184,31 @@ public class InventorySys
         }
     }
 
+    public static void updateStock(int userId, int quantity)
+    {
+        if (quantity < 0)
+        {
+            return;
+        }
+
+        // Try to find an existing stock record
+        Stock stock = findStockById(userId);
+
+        if (stock == null)
+        {
+            return;
+        }
+        else
+        {
+            // Existing record: update the stock level
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("stockLevel", quantity);
+
+            String where = "id = " + stock.getId();
+            Database.update("stock", updates, where);
+        }
+    }
+
     /**
      * Retrieves an item from the database using its unique identifier.
      *
